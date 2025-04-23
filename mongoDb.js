@@ -19,8 +19,6 @@ const disconnect = async () => {
 const getDb = () => {
   if (!db) {
     throw new Error("MongoDB not initialized. Call connect() first.");
-    g;
-    g;
   }
   return db;
 };

@@ -17,7 +17,7 @@ async function start() {
     console.log(`Server started on ${port} port!`);
   });
 
-  proccess.on("SIGHN", async () => {
+  process.on("SIGHN", async () => {
     console.log("SIGHN recieved - closing MongoDB connection");
     await disconnect();
     process.exit(0);
@@ -30,5 +30,5 @@ async function start() {
 
 start().catch(err => {
   console.error("Failed to start application:", err);
-  proccess.exit(1);
+  process.exit(1);
 });
