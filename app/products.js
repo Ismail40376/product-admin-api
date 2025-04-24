@@ -7,6 +7,7 @@ const path = require("path");
 const config = require("../config.js");
 const mongoDb = require("../mongoDb.js");
 const ObjectId = require("mongodb").ObjectId;
+const Product = require("../modulse/product-model.js");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -62,12 +63,19 @@ router.post("/", upload.single("image"), async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const success = await fileDb.deleteItem(req.params.id);
-  if (!success) {
-    return res.status(404).send({ error: "Product not found" });
+  try {
+    const db = mongoDb.getDb();
+    const products = db.collection("products");
+    const result = await products.deleteOne({
+      _id: new ObjectId(req.params.id),
+    });
+    if (result.deletedCount === 1) {
+      return res.json({ message: "Product deleted successfully" });
+    }
+  } catch (error) {
+    console.error("Failed to delete product:", error);
+    res.sendStatus(500);
   }
-
-  res.send({ message: "Product delete succesfully" });
 });
 
 module.exports = router;

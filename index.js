@@ -2,12 +2,11 @@ const express = require("express");
 const app = express();
 const port = 8000;
 const products = require("./app/products");
-const fileDb = require("./fileDb");
 const cors = require("cors");
-const { connect, disconnect } = require("./mongoDb");
+const mongoose = require("mongoose");
 
 async function start() {
-  await connect();
+  await mongoose.connect("mongodb://localhost:27017/shop");
   app.use(cors());
   app.use(express.static("public"));
   app.use(express.json());
