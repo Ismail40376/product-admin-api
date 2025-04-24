@@ -1,13 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const fileDb = require("../fileDb.js");
 const nanoid = require("nanoid");
 const multer = require("multer");
 const path = require("path");
 const config = require("../config.js");
-const mongoDb = require("../mongoDb.js");
-const ObjectId = require("mongodb").ObjectId;
-const Product = require("../modulse/product-model.js");
+const Product = require("../models/Product-model.js");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -17,12 +14,12 @@ const storage = multer.diskStorage({
     cb(null, nanoid() + path.extname(file.originalname));
   },
 });
+
 const upload = multer({ storage });
 
 router.get("/", async (req, res) => {
   try {
-    const db = mongoDb.getDb();
-    const results = await db.collection("products").find().toArray();
+    const results = await Product.find();
     res.send(results);
   } catch (error) {
     res.sendStatus(500);
@@ -31,13 +28,12 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const db = mongoDb.getDb();
-    const products = db.collection("products");
-    const result = await products.findOne({ _id: new ObjectId(req.params.id) });
+    const result = await Product.findById(req.params.id);
     if (result) {
-      return res.json(result);
+      res.send(result);
+    } else {
+      res.sendStatus(404);
     }
-    res.status(404);
   } catch (error) {
     console.error("Error fetching product by id:", error);
     res.sendStatus(500);
@@ -45,37 +41,52 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", upload.single("image"), async (req, res) => {
+  const productData = req.body;
+  if (req.file) {
+    productData.image = req.file.filename;
+  } else {
+    productData.image = null;
+  }
+  const product = new Product(productData);
+
   try {
-    const db = mongoDb.getDb();
-    const product = {
-      ...req.body,
-      image: req.file ? req.file.filename : null,
-    };
-    const result = await db.collection("products").insertOne(product);
-    res.status(201).send({
-      _id: result.insertdId,
-      ...product,
-    });
+    await product.save;
+    res.status(201).send(product);
   } catch (error) {
-    console.error("Crearing product failed:", error);
+    console.error("Creating product failed:", error);
     res.status(500);
   }
 });
 
 router.delete("/:id", async (req, res) => {
   try {
-    const db = mongoDb.getDb();
-    const products = db.collection("products");
-    const result = await products.deleteOne({
-      _id: new ObjectId(req.params.id),
-    });
-    if (result.deletedCount === 1) {
-      return res.json({ message: "Product deleted successfully" });
+    const deleted = await Product.findByIdAndDelete(req.params.id);
+    if (deleted) {
+      res.send({ message: "Product deleted successfully" });
+    } else {
+      res.sendStatus(404);
     }
   } catch (error) {
     console.error("Failed to delete product:", error);
     res.sendStatus(500);
   }
+});
+
+router.put("/:id", upload.single("image"), async (req, res) => {
+  try {
+    const updateData = req.body;
+    console.log(req.body);
+    const updateProduct = await Product.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updateProduct) {
+      return res.sendStatus(404);
+    }
+    res.json({ message: "Product updated sucessfully", product: updateProduct });
+  } catch (error) {}
+  consolr.error("Failed to updated product", error);
+  send.status(500).send(error);
 });
 
 module.exports = router;
