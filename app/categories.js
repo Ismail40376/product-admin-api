@@ -3,7 +3,7 @@ const Category = require("../models/category-model");
 
 const router = express.Router();
 
-router.get("/", async (requestAnimationFrame, res) => {
+router.get("/", async (req, res) => {
   try {
     const categories = await Category.find();
     res.send(categories);
@@ -12,9 +12,9 @@ router.get("/", async (requestAnimationFrame, res) => {
   }
 });
 
-router.post("/", async (requestAnimationFrame, res) => {
+router.post("/", async (req, res) => {
   const categoryData = req.body;
-  const category = new categoryData(categoryData);
+  const category = new Category(categoryData);
   try {
     await category.save();
     res.send(category);
