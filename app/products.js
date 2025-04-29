@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.get("/", async (req, res) => {
+async function listProducts(req, res) {
   try {
     const results = await Product.find({ category: req.query.category }).populate(
       "category",
@@ -27,9 +27,9 @@ router.get("/", async (req, res) => {
   } catch (error) {
     res.sendStatus(500);
   }
-});
+}
 
-router.get("/:id", async (req, res) => {
+async function getProductById(req, res) {
   try {
     const result = await Product.findById(req.params.id);
     if (result) {
@@ -41,9 +41,9 @@ router.get("/:id", async (req, res) => {
     console.error("Error fetching product by id:", error);
     res.sendStatus(500);
   }
-});
+}
 
-router.post("/", upload.single("image"), async (req, res) => {
+async function createProduct(req, res) {
   const productData = req.body;
   if (req.file) {
     productData.image = req.file.filename;
@@ -59,9 +59,9 @@ router.post("/", upload.single("image"), async (req, res) => {
     console.error("Creating product failed:", error);
     res.status(500);
   }
-});
+}
 
-router.delete("/:id", async (req, res) => {
+async function deleteProduct(req, res) {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (deleted) {
@@ -73,9 +73,9 @@ router.delete("/:id", async (req, res) => {
     console.error("Failed to delete product:", error);
     res.sendStatus(500);
   }
-});
+}
 
-router.put("/:id", upload.single("image"), async (req, res) => {
+async function updateProduct(req, res) {
   try {
     const updateData = req.body;
     console.log(req.body);
@@ -90,6 +90,18 @@ router.put("/:id", upload.single("image"), async (req, res) => {
   } catch (error) {}
   consolr.error("Failed to updated product", error);
   send.status(500).send(error);
-});
+}
 
-module.exports = router;
+router.get("/", listProducts);
+router.get("/:id", getProductById);
+router.get("/", upload.single("image"), createProduct);
+router.delete("/:id", upload.single("image"), updateProduct);
+
+module.exports = {
+  router,
+  listProducts,
+  getProductById,
+  createProduct,
+  deleteProduct,
+  updateProduct,
+};
