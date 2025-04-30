@@ -1,4 +1,4 @@
-jest.mock("../../models/Product-model.js");
+jest.mock("../../models/product-model.js");
 jest.mock("nanoid", () => ({ nanoid: jest.fn().mockReturnValue("12345") }));
 
 const {
@@ -14,7 +14,7 @@ afterEach(() => jest.clearAllMocks());
 
 describe("Product handlers - unit tests", () => {
   describe("listProducts", () => {
-    test("succesfully return array of products", async () => {
+    test("succefully return array of products", async () => {
       const fakeData = [{ title: "A" }];
       const populate = jest.fn().mockResolvedValue(fakeData);
       Product.find.mockReturnValue({ populate });
@@ -44,7 +44,7 @@ describe("Product handlers - unit tests", () => {
       Product.findById.mockResolvedValue(fake);
 
       const req = { params: { id: "xyz" } };
-      const res = { send: jest.fn(), sendSatatus: jest.fn() };
+      const res = { send: jest.fn(), sendStatus: jest.fn() };
       await getProductById(req, res);
       expect(Product.findById).toHaveBeenCalledWith("xyz");
       expect(res.send).toHaveBeenCalledWith(fake);
@@ -62,6 +62,44 @@ describe("Product handlers - unit tests", () => {
       const res = { send: jest.fn(), sendStatus: jest.fn() };
       await getProductById(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe("createProduct", () => {
+    beforeEach(() => {
+      Product.mockImplementation(data => ({ ...data, save: jest.fn().mockResolvedValue() }));
+    });
+
+    test("create product without file", async () => {
+      const req = { body: { title: "t1" }, file: undefined };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+
+      await createProduct(req, res);
+      expect(Product).toHaveBeenCalledWith({ title: "t1", image: null });
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ title: "t1", image: null }));
+    });
+    test("create product with file", async () => {
+      const req = { body: { title: "t2" }, file: { filename: "file.png" } };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      await createProduct(req, res);
+
+      expect(Product).toHaveBeenCalledWith({ title: "t2", image: "file.png" });
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "t2", image: "file.png" })
+      );
+    });
+
+    test("return 500 for create product", async () => {
+      Product.mockImplementation(() => ({
+        save: jest.fn().mockRejectedValue(new Error("oops")),
+      }));
+      const req = { body: {}, file: undefined };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      await createProduct(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 });

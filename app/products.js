@@ -4,7 +4,7 @@ const nanoid = require("nanoid");
 const multer = require("multer");
 const path = require("path");
 const config = require("../config.js");
-const Product = require("../models/Product-model.js");
+const Product = require("../models/product-model.js");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -53,17 +53,17 @@ async function createProduct(req, res) {
   const product = new Product(productData);
 
   try {
-    await product.save;
+    await product.save();
     res.status(201).send(product);
   } catch (error) {
     console.error("Creating product failed:", error);
-    res.status(500);
+    res.status(500).send(error);
   }
 }
 
 async function deleteProduct(req, res) {
   try {
-    const deleted = await Product.findByIdAndDelete(req.params.id);
+    const deleted = await Product.findByIdAndDelete({ _id: req.params.id });
     if (deleted) {
       res.send({ message: "Product deleted successfully" });
     } else {
@@ -78,7 +78,6 @@ async function deleteProduct(req, res) {
 async function updateProduct(req, res) {
   try {
     const updateData = req.body;
-    console.log(req.body);
     const updateProduct = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
@@ -87,15 +86,17 @@ async function updateProduct(req, res) {
       return res.sendStatus(404);
     }
     res.json({ message: "Product updated sucessfully", product: updateProduct });
-  } catch (error) {}
-  consolr.error("Failed to updated product", error);
-  send.status(500).send(error);
+  } catch (error) {
+    console.error("Failed to update product", error);
+    send.status(500).send(error);
+  }
 }
 
 router.get("/", listProducts);
 router.get("/:id", getProductById);
-router.get("/", upload.single("image"), createProduct);
-router.delete("/:id", upload.single("image"), updateProduct);
+router.post("/", upload.single("image"), createProduct);
+router.delete("/:id", deleteProduct);
+router.put("/:id", upload.single("image"), updateProduct);
 
 module.exports = {
   router,
