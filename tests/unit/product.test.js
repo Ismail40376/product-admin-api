@@ -8,7 +8,7 @@ const {
   deleteProduct,
   updateProduct,
 } = require("../../app/products");
-const Product = require("../../models/Product-model");
+const Product = require("../../models/Product-models");
 
 afterEach(() => jest.clearAllMocks());
 
