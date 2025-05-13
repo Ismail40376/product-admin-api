@@ -5,6 +5,8 @@ const multer = require("multer");
 const path = require("path");
 const config = require("../config.js");
 const Product = require("../models/product-model.js");
+const auth = require("./middleware/auth.js");
+const permit = require("./middleware/permit.js");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -19,10 +21,7 @@ const upload = multer({ storage });
 
 async function listProducts(req, res) {
   try {
-    const results = await Product.find({ category: req.query.category }).populate(
-      "category",
-      "title description"
-    );
+    const results = await Product.find;
     res.send(results);
   } catch (error) {
     res.sendStatus(500);
@@ -94,7 +93,7 @@ async function updateProduct(req, res) {
 
 router.get("/", listProducts);
 router.get("/:id", getProductById);
-router.post("/", upload.single("image"), createProduct);
+router.post("/", [auth, permit("admin")], upload.single("image"), createProduct);
 router.delete("/:id", deleteProduct);
 router.put("/:id", upload.single("image"), updateProduct);
 
